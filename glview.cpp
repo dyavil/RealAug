@@ -19,12 +19,12 @@ void GLView::initializeGL()
     glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_CULL_FACE);
-
+    glEnable(GL_TEXTURE_2D);
+    glShadeModel(GL_SMOOTH);
     glFrontFace(GL_CCW);
 
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    glColor3f(1.0, 1.0, 0.0);
     glClearDepth(1.f);
     glDepthFunc(GL_LESS);
 }
@@ -32,17 +32,39 @@ void GLView::initializeGL()
 void GLView::paintGL()
 {
 
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
+    cv::Mat tmp;
+    cv::cvtColor(drawing.currentImg, tmp, cv::COLOR_RGB2BGR);
+
+    cv::flip(tmp, tmp, 0);
+    cv::flip(tmp, tmp, 1);
+
+    QImage imgIn = QImage((uchar*) tmp.data, tmp.cols, tmp.rows, tmp.step, QImage::Format_RGB888);
+
+    //std::cout << imgIn.width() << std::endl;
+    QImage textureImg = QGLWidget::convertToGLFormat(imgIn);
+    glGenTextures(1, &text);
+    glBindTexture(GL_TEXTURE_2D, text);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, textureImg.width(), textureImg.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureImg.bits());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    glBindTexture(GL_TEXTURE_2D, text);
+
+
 
     drawing.drawChessBoard(7, 4, 31.0);
-    qglColor(Qt::white);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, vertexArray.constData());
-    glDrawArrays(GL_TRIANGLES, 0, vertexArray.size());
-    glDisableClientState(GL_VERTEX_ARRAY);
+    //
+    if(drawing.isRead){
+        qglColor(Qt::gray);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, vertexArray.constData());
+        glDrawArrays(GL_TRIANGLES, 0, vertexArray.size());
+        glDisableClientState(GL_VERTEX_ARRAY);
+    }
 
     update();
 }
@@ -50,8 +72,15 @@ void GLView::paintGL()
 void GLView::resizeGL(int w, int h)
 {
     glViewport(0, 0, 640, 480);
-    drawing.initFrustum();
 
+    drawing.initFrustum();
+    /*glViewport(0, 0, w, h);
+        /*glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(45.0f, (GLfloat)w/(GLfloat)h, 0.1f, 100.0f);
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();*/
 
 }
 

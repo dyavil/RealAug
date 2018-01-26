@@ -7,6 +7,9 @@
 #include <QOpenGLFunctions_2_0>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
+
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 #include "cvtogl.h"
 #include <QVector3D>
 
@@ -33,6 +36,7 @@ private:
     float angle;
     QPoint position;
     QVector<QVector3D>  vertexArray;
+    GLuint text;
 };
 
 

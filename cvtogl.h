@@ -7,13 +7,14 @@
 #include <iostream>
 #include <fstream>
 #include <QString>
+#include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/core/utility.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/videoio.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include "include/tiny_obj_loader.h"
 
 
@@ -47,6 +48,8 @@ public:
     int hh;
     int imgWidth;
     int imgHeight;
+    cv::Mat currentImg;
+    bool isRead;
     CameraInfoLoc cm;
 };
 

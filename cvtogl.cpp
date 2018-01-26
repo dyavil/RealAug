@@ -9,7 +9,9 @@ cap(0)
     fs["cameraMat"] >> cm.cameraMat;
     fs["distCoeffs"] >> cm.distCoefs;
     fs["imgPoints"] >> cm.imgPoints;
-    loadObj("obj/teapot.obj", 0.8, cv::Point3f(80.0, 50.0, 60.0));
+    loadObj("obj/teapot.obj", 0.8, cv::Point3f(80.0, 50.0, 100.0));
+    cap.read(currentImg);
+    isRead = false;
 }
 
 void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
@@ -74,13 +76,41 @@ void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
 }
 
 void CVtoGL::initFrustum(){
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+
     //std::cout << imgWidth <<", "  <<imgHeight << std::endl;
     cv::Mat p = (cv::Mat_<double>(3,1) << -imgWidth/2, 0, 1);
     cv::Mat q = (cv::Mat_<double>(3,1) << 0, imgHeight/2, 1);
     cv::Mat r = (cv::Mat_<double>(3,1) << imgWidth/2, 0, 1);
     cv::Mat s = (cv::Mat_<double>(3,1) << 0, -imgHeight/2, 1);
+
+    glMatrixMode(GL_PROJECTION);
+    glOrtho(0,1,1,0,-1,1);
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_QUADS);
+        glTexCoord2f(1,0);
+        glVertex3f(-imgWidth/2,-imgHeight/2, 1250);
+        glTexCoord2f(1,1);
+        glVertex3f(-imgWidth/2,imgHeight/2, 1250);
+        glTexCoord2f(0,1);
+        glVertex3f(imgWidth/2,imgHeight/2, 1250);
+        glTexCoord2f(0,0);
+        glVertex3f(imgWidth/2,-imgHeight/2, 1250);
+
+        //glTexCoord2f(1,0);
+        //glVertex3f(1,0, 0);
+
+        //glTexCoord2f(1,1);
+        //glVertex3f(1,1, 0);
+
+        //glTexCoord2f(0,1);
+        //glVertex3f(0,1, 0);
+    glEnd();
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
     float z0 = 0.1;
     cv::Mat test;
     cv::FileStorage fs("obj/calib.txt",cv::FileStorage::READ);
@@ -109,7 +139,7 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
             ww++;
             hh =0;
             for (int j = 0; j < h; ++j) {
-                worldPoints.push_back(cv::Point3f(squareWidth*i, squareWidth*j,0.0));
+                worldPoints.push_back(cv::Point3f(squareWidth*i, squareWidth*j, 50.0));
                 hh++;
             }
         }
@@ -122,10 +152,12 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
     cv::Mat frame;
     std::vector<cv::Point2f> pointBuf;
     cap.read(frame);
+    currentImg = frame;
 
     bool found = cv::findChessboardCorners(frame, cv::Size(h, w), pointBuf, chessBoardFlags);
-    cv::imshow("frame", frame);
+    //cv::imshow("frame", frame);
     if(found) {
+        if(!isRead) isRead = true;
         cm.imgPoints = pointBuf;
 
         imgHeight = frame.rows;
@@ -135,35 +167,42 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
     render();
     //drawObj();
     //std::cout << ww << ", " << hh << std::endl;
-    for (int i = 0; i < ww-1; ++i) {
-        for (int j = 0; j < hh-1; ++j) {
-            if(((i+j) %2)) glColor3f(1.0, 1.0, 1.0);
-            else glColor3f(0.0, 0.0, 0.0);
-            glBegin(GL_QUADS);
-            glVertex3f(worldPoints[i*hh+j].x, worldPoints[i*hh+j].y, worldPoints[i*hh+j].z);
-            glVertex3f(worldPoints[(i+1)*hh+j].x, worldPoints[(i+1)*hh+j].y, worldPoints[(i+1)*hh+j].z);
-            glVertex3f(worldPoints[(i+1)*hh+j+1].x, worldPoints[(i+1)*hh+j+1].y, worldPoints[(i+1)*hh+j+1].z);
-            glVertex3f(worldPoints[i*hh+j+1].x, worldPoints[i*hh+j+1].y, worldPoints[i*hh+j+1].z);
-            glEnd();
+    if(isRead && found)
+    {
+        for (int i = 0; i < ww-1; ++i) {
+            for (int j = 0; j < hh-1; ++j) {
+                if(((i+j) %2)) glColor3f(1.0, 1.0, 1.0);
+                else glColor3f(0.0, 0.0, 0.0);
+                glBegin(GL_QUADS);
+                //glTexCoord2f(0,0);
+                glVertex3f(worldPoints[i*hh+j].x, worldPoints[i*hh+j].y, worldPoints[i*hh+j].z);
+                //glTexCoord2f(1,0);
+                glVertex3f(worldPoints[(i+1)*hh+j].x, worldPoints[(i+1)*hh+j].y, worldPoints[(i+1)*hh+j].z);
+                //glTexCoord2f(1,1);
+                glVertex3f(worldPoints[(i+1)*hh+j+1].x, worldPoints[(i+1)*hh+j+1].y, worldPoints[(i+1)*hh+j+1].z);
+                //glTexCoord2f(0,1);
+                glVertex3f(worldPoints[i*hh+j+1].x, worldPoints[i*hh+j+1].y, worldPoints[i*hh+j+1].z);
+                glEnd();
+            }
         }
-    }
-    glLineWidth(2.5);
-    glColor3f(1.0, 0.0, 0.0);
-    glBegin(GL_LINES);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(99, 0, 0);
-    glEnd();
-    glColor3f(0.0, 1.0, 0.0);
-    glBegin(GL_LINES);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0, 99, 0);
-    glEnd();
-    glColor3f(0.0, 0.0, 1.0);
-    glBegin(GL_LINES);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0, 0, 99);
-    glEnd();
 
+        glLineWidth(2.5);
+        glColor3f(1.0, 0.0, 50.0);
+        glBegin(GL_LINES);
+        glVertex3f(0.0, 0.0, 50.0);
+        glVertex3f(99, 0, 0);
+        glEnd();
+        glColor3f(0.0, 1.0, 50.0);
+        glBegin(GL_LINES);
+        glVertex3f(0.0, 0.0, 50.0);
+        glVertex3f(0, 99, 0);
+        glEnd();
+        glColor3f(0.0, 0.0, 1.0);
+        glBegin(GL_LINES);
+        glVertex3f(0.0, 0.0, 50.0);
+        glVertex3f(0, 0, 99);
+        glEnd();
+    }
 
 
 }
