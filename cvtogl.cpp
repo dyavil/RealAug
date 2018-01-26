@@ -4,9 +4,70 @@ CVtoGL::CVtoGL()
 {
     imgHeight = 40;
     imgWidth = 40;
-    loadObj("teapot.obj", 1, cv::Point3f(80.0, 50.0, 80.0));
+    loadObj("teapot.obj", 0.8, cv::Point3f(80.0, 50.0, 60.0));
 }
 
+void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
+    std::string inputfile = path.toStdString();
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+
+    std::string err;
+    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, inputfile.c_str());
+
+    if (!err.empty()) { // `err` may contain warning message.
+      std::cerr << err << std::endl;
+    }
+
+    if (!ret) {
+      exit(1);
+    }
+
+    std::vector<tinyobj::real_t>::const_iterator result;
+    //std::cout << colors.size() << ", " << sf.h*sf.w << std::endl;
+    result = std::max_element(attrib.vertices.begin(), attrib.vertices.end());
+
+    std::cout << *result << std::endl;
+    // Loop over shapes
+    for (size_t s = 0; s < shapes.size(); s++) {
+      // Loop over faces(polygon)
+     cv::Point3f colorr = cv::Point3f(0.0, 0.392157, 0.0);
+      size_t index_offset = 0;
+      for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+        int fv = shapes[s].mesh.num_face_vertices[f];
+
+        // Loop over vertices in the face.
+        for (size_t v = 0; v < fv; v++) {
+          // access to vertex
+          tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+          tinyobj::real_t vx = attrib.vertices[3*idx.vertex_index+0];
+          tinyobj::real_t vy = attrib.vertices[3*idx.vertex_index+1];
+          tinyobj::real_t vz = attrib.vertices[3*idx.vertex_index+2];
+          meshVertices.push_back(cv::Point3f(vx*scale, vy*scale, vz*scale)+trans);
+          tinyobj::real_t nx = attrib.normals[3*idx.normal_index+0];
+          tinyobj::real_t ny = attrib.normals[3*idx.normal_index+1];
+          tinyobj::real_t nz = attrib.normals[3*idx.normal_index+2];
+          meshNormales.push_back(cv::Point3f(nx, ny, nz));
+          /*
+          tinyobj::real_t tx = attrib.texcoords[2*idx.texcoord_index+0];
+          tinyobj::real_t ty = attrib.texcoords[2*idx.texcoord_index+1];*/
+          // Optional: vertex colors
+          tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
+          tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
+          tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
+          std::cout << cv::Point3f(red, green, blue) << std::endl;
+          meshColors.push_back(cv::Point3f(red, green, blue));
+          /*if(vz > (*result - *result*0.82) ) meshVertices.push_back(colorr);
+          else treeColors.push_back(Vector3(0.647059, 0.164706, 0.164706));*/
+        }
+        index_offset += fv;
+
+        // per-face material
+        shapes[s].mesh.material_ids[f];
+      }
+    }
+}
 
 void CVtoGL::initFrustum(){
     glMatrixMode(GL_PROJECTION);
@@ -52,7 +113,6 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
             hh =0;
             for (int j = 0; j < h; ++j) {
                 worldPoints.push_back(cv::Point3f(squareWidth*i, squareWidth*j,0.0));
-                initworldPoints.push_back(cv::Point3f(squareWidth*i, squareWidth*j,0.0));
                 hh++;
             }
         }
@@ -76,7 +136,7 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
     }
 
     render();
-
+    drawObj();
     //std::cout << ww << ", " << hh << std::endl;
     for (int i = 0; i < ww-1; ++i) {
         for (int j = 0; j < hh-1; ++j) {
@@ -97,68 +157,22 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
         }
     }
 
-}
 
 
-void CVtoGL::loadObj(std::string filename, float scale, cv::Point3f trans) {
-    setlocale(LC_NUMERIC, "C");
-    std::ifstream file(filename.c_str());
-    std::string line, prefixe;
-    while(!file.eof()) {
-        getline(file, line);
-        prefixe = line.substr(0, 2);
-
-        // Face
-        if(prefixe == "f ") {
-            std::size_t idx = line.find("//");
-            if(idx != std::string::npos) {
-                while(idx != std::string::npos) {
-                    line.insert(idx+1, "0");
-                    idx = line.find("//");
-                }
-                int v1, v2, v3, t1, t2, t3, n1, n2, n3;
-                sscanf(&line[0], "f  %d/%d/%d %d/%d/%d %d/%d/%d", &v1, &t1, &n1, &v2, &t2, &n2, &v3, &t3, &n3);
-                meshFaces.push_back(MeshFace(cv::Point3i(v1-1, v2-1, v3-1), cv::Point3i(n1-1, n2-1, n3-1)));
-            } else {
-                int v1, v2, v3;
-                sscanf(&line[0], "f  %d %d %d", &v1, &v2, &v3);
-                meshFaces.push_back(MeshFace(cv::Point3i(v1-1, v2-1, v3-1), cv::Point3i()));
-            }
-        }
-        // Vertice
-        else if(prefixe == "v ")
-        {
-            float x, y, z;
-            sscanf(&line[0], "v  %f %f %f", &x, &y, &z);
-            meshVertices.push_back(cv::Point3f(scale*x + trans.x, scale*y + trans.y, scale*z + trans.z));
-        }
-        // Normale
-        else if(prefixe == "vn")
-        {
-            float x, y, z;
-            sscanf(&line[0], "vn %f %f %f", &x, &y, &z);
-            meshNormales.push_back(cv::Point3f(scale*x + trans.x, scale*y + trans.y, scale*z + trans.z));
-        }
-    }
-
-    file.close();
 }
 
 
 void CVtoGL::drawObj() {
-    glColor3ub(255, 0, 0);
-
-    for(unsigned int i = 0; i < meshFaces.size(); ++i) {
+    glColor3ub(200, 150, 200);
+    for(unsigned int i = 0; i < meshVertices.size(); i+=3) {
         glBegin(GL_TRIANGLES);
 
-        glNormal3f(meshVertices[meshFaces[i].normales.x].x, meshVertices[meshFaces[i].normales.x].y, meshVertices[meshFaces[i].normales.x].z);
-        glVertex3f(meshVertices[meshFaces[i].vertices.x].x, meshVertices[meshFaces[i].vertices.x].y, meshVertices[meshFaces[i].vertices.x].z + 1);
-
-        glNormal3f(meshVertices[meshFaces[i].normales.y].x, meshVertices[meshFaces[i].normales.y].y, meshVertices[meshFaces[i].normales.y].z);
-        glVertex3f(meshVertices[meshFaces[i].vertices.y].x, meshVertices[meshFaces[i].vertices.y].y, meshVertices[meshFaces[i].vertices.y].z + 1);
-
-        glNormal3f(meshVertices[meshFaces[i].normales.z].x, meshVertices[meshFaces[i].normales.z].y, meshVertices[meshFaces[i].normales.z].z);
-        glVertex3f(meshVertices[meshFaces[i].vertices.z].x, meshVertices[meshFaces[i].vertices.z].y, meshVertices[meshFaces[i].vertices.z].z + 1);
+        glNormal3f(meshNormales[i].x, meshNormales[i].y, meshNormales[i].z);
+        glVertex3f(meshVertices[i].x, meshVertices[i].y, meshVertices[i].z);
+        glNormal3f(meshNormales[i+1].x, meshNormales[i+1].y, meshNormales[i+1].z);
+        glVertex3f(meshVertices[i+1].x, meshVertices[i+1].y, meshVertices[i+1].z);
+        glNormal3f(meshNormales[i+2].x, meshNormales[i+2].y, meshNormales[i+2].z);
+        glVertex3f(meshVertices[i+2].x, meshVertices[i+2].y, meshVertices[i+2].z);
 
         glEnd();
     }
@@ -169,20 +183,8 @@ void CVtoGL::render(){
     initFrustum();
 
     cv::Mat rot, trans, matRot, rotT, pos_camera, point, center, uc, uw;
-    cv::solvePnP(initworldPoints, cm.imgPoints, cm.cameraMat, cm.distCoefs, rot, trans);
+    cv::solvePnP(worldPoints, cm.imgPoints, cm.cameraMat, cm.distCoefs, rot, trans);
     cv::Rodrigues(rot, matRot);
-
-    for (unsigned int i = 0; i < initworldPoints.size(); ++i) {
-        cv::Mat mat(3,1,CV_64F);
-        mat.at<double>(0, 0) = initworldPoints[i].x;
-        mat.at<double>(1, 0) = initworldPoints[i].y;
-        mat.at<double>(2, 0) = initworldPoints[i].z;
-        /*cv::Mat ress = rotf*mat;
-        const double *data = ress.ptr<double>(0);
-        worldPoints[i] = cv::Point3f(data[0], data[1], data[2]);
-        std::cout << ress << initworldPoints[i] <<std::endl;
-        worldPoints[i] = rotf*worldPoints[i];*/
-    }
 
     cv::transpose(matRot, rotT);
     pos_camera = -rotT * trans;
@@ -203,5 +205,5 @@ void CVtoGL::render(){
               center.at<double>(0, 0), center.at<double>(1, 0), center.at<double>(2, 0),
               uw.at<double>(0, 0), uw.at<double>(1, 0), uw.at<double>(2, 0));
 
-    drawObj();
+    //drawObj();
 }

@@ -32,13 +32,15 @@ SOURCES += \
         main.cpp \
         maindisplay.cpp \
     glview.cpp \
-    cvtogl.cpp
+    cvtogl.cpp \
+    include/tiny_obj_loader.cc
 
 HEADERS += \
         maindisplay.h \
     glview.h \
     camera_calibration.h \
-    cvtogl.h
+    cvtogl.h \
+    include/tiny_obj_loader.h
 
 FORMS += \
         maindisplay.ui

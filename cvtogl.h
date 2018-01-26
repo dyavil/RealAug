@@ -6,7 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-
+#include <QString>
 #include <opencv2/core.hpp>
 #include <opencv2/core/utility.hpp>
 #include <opencv2/imgproc.hpp>
@@ -14,6 +14,7 @@
 #include <opencv2/calib3d.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
+#include "include/tiny_obj_loader.h"
 
 
 class CameraInfoLoc{
@@ -25,31 +26,21 @@ public:
 
 };
 
-class MeshFace
-{
-public:
-    MeshFace(cv::Point3i v, cv::Point3i n = cv::Point3i()) : vertices(v), normales(n) {}
-
-    cv::Point3i vertices;
-    cv::Point3i normales;
-};
-
 class CVtoGL
 {
 public:
     CVtoGL();
     void initFrustum();
     void drawChessBoard(int w, int h, float squareWidth);
-    void loadObj(std::string filename, float scale, cv::Point3f trans);
     void drawObj();
     void render();
 
     std::vector<cv::Point3f> worldPoints;
-    std::vector<cv::Point3f> initworldPoints;
 
     std::vector<cv::Point3f> meshVertices;
     std::vector<cv::Point3f> meshNormales;
-    std::vector<MeshFace> meshFaces;
+    std::vector<cv::Point3f> meshColors;
+    void loadObj(QString path, float scale, cv::Point3f trans);
 
     int ww;
     int hh;

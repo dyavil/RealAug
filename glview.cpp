@@ -21,6 +21,8 @@ void GLView::initializeGL()
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     glColor3f(1.0, 1.0, 0.0);
+    glClearDepth(1.f);
+    glDepthFunc(GL_LESS);
 }
 
 void GLView::paintGL()
@@ -28,6 +30,7 @@ void GLView::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
+
 
     drawing.drawChessBoard(7, 4, 31.0);
 
