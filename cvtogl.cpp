@@ -5,7 +5,11 @@ cap(0)
 {
     imgHeight = 640;
     imgWidth = 480;
-    loadObj("teapot.obj", 0.8, cv::Point3f(80.0, 50.0, 60.0));
+    cv::FileStorage fs("obj/calib.txt",cv::FileStorage::READ);
+    fs["cameraMat"] >> cm.cameraMat;
+    fs["distCoeffs"] >> cm.distCoefs;
+    fs["imgPoints"] >> cm.imgPoints;
+    loadObj("obj/teapot.obj", 0.8, cv::Point3f(80.0, 50.0, 60.0));
 }
 
 void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
@@ -33,10 +37,9 @@ void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
     // Loop over shapes
     for (size_t s = 0; s < shapes.size(); s++) {
       // Loop over faces(polygon)
-     cv::Point3f colorr = cv::Point3f(0.0, 0.392157, 0.0);
       size_t index_offset = 0;
       for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-        int fv = shapes[s].mesh.num_face_vertices[f];
+        unsigned int fv = shapes[s].mesh.num_face_vertices[f];
 
         // Loop over vertices in the face.
         for (size_t v = 0; v < fv; v++) {
@@ -80,7 +83,7 @@ void CVtoGL::initFrustum(){
     cv::Mat s = (cv::Mat_<double>(3,1) << 0, -imgHeight/2, 1);
     float z0 = 0.1;
     cv::Mat test;
-    cv::FileStorage fs("calib.txt",cv::FileStorage::READ);
+    cv::FileStorage fs("obj/calib.txt",cv::FileStorage::READ);
     fs["cameraMat"] >> test;
     cv::Mat invcam = test.inv();
     p = z0*invcam*p;
@@ -151,7 +154,7 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
 
 
 void CVtoGL::drawObj() {
-    glColor3ub(200, 150, 200);
+    glColor3ub(150, 150, 150);
     for(unsigned int i = 0; i < meshVertices.size(); i+=3) {
         glBegin(GL_TRIANGLES);
 
