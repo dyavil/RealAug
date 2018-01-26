@@ -4,7 +4,7 @@ CVtoGL::CVtoGL()
 {
     imgHeight = 40;
     imgWidth = 40;
-    loadObj("teapot.obj", 0.8, cv::Point3f(80.0, 50.0, 60.0));
+    loadObj("obj/teapot.obj", 0.8, cv::Point3f(80.0, 50.0, 60.0));
 }
 
 void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
@@ -28,14 +28,13 @@ void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
     //std::cout << colors.size() << ", " << sf.h*sf.w << std::endl;
     result = std::max_element(attrib.vertices.begin(), attrib.vertices.end());
 
-    std::cout << *result << std::endl;
+    //std::cout << *result << std::endl;
     // Loop over shapes
     for (size_t s = 0; s < shapes.size(); s++) {
       // Loop over faces(polygon)
-     cv::Point3f colorr = cv::Point3f(0.0, 0.392157, 0.0);
       size_t index_offset = 0;
       for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-        int fv = shapes[s].mesh.num_face_vertices[f];
+        unsigned int fv = shapes[s].mesh.num_face_vertices[f];
 
         // Loop over vertices in the face.
         for (size_t v = 0; v < fv; v++) {
@@ -56,7 +55,7 @@ void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
           tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
           tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
           tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-          std::cout << cv::Point3f(red, green, blue) << std::endl;
+          //std::cout << cv::Point3f(red, green, blue) << std::endl;
           meshColors.push_back(cv::Point3f(red, green, blue));
           /*if(vz > (*result - *result*0.82) ) meshVertices.push_back(colorr);
           else treeColors.push_back(Vector3(0.647059, 0.164706, 0.164706));*/
@@ -79,7 +78,7 @@ void CVtoGL::initFrustum(){
     cv::Mat s = (cv::Mat_<double>(3,1) << 0, -imgHeight/2, 1);
     float z0 = 0.1;
     cv::Mat test;
-    cv::FileStorage fs("calib.txt",cv::FileStorage::READ);
+    cv::FileStorage fs("obj/calib.txt",cv::FileStorage::READ);
     fs["cameraMat"] >> test;
     cv::Mat invcam = test.inv();
     p = z0*invcam*p;
@@ -163,7 +162,7 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
 
 
 void CVtoGL::drawObj() {
-    glColor3ub(200, 150, 200);
+    glColor3ub(150, 150, 150);
     for(unsigned int i = 0; i < meshVertices.size(); i+=3) {
         glBegin(GL_TRIANGLES);
 

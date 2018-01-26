@@ -31,19 +31,22 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         maindisplay.cpp \
-    glview.cpp \
-    cvtogl.cpp \
-    include/tiny_obj_loader.cc
+        glview.cpp \
+        cvtogl.cpp \
+        include/tiny_obj_loader.cc
 
 HEADERS += \
         maindisplay.h \
-    glview.h \
-    camera_calibration.h \
-    cvtogl.h \
-    include/tiny_obj_loader.h
+        glview.h \
+        camera_calibration.h \
+        cvtogl.h \
+        include/tiny_obj_loader.h
 
 FORMS += \
         maindisplay.ui
 
+obj.path   = $${OUT_PWD}/obj
+obj.files  = obj/*
+INSTALLS    += obj
 
 QMAKE_CXXFLAGS += -std=c++11

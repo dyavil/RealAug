@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     MainDisplay w;
 
     CameraInfo cm;
-    FileStorage fs("calib.txt",FileStorage::READ);
+    FileStorage fs("obj/calib.txt",FileStorage::READ);
     fs["cameraMat"] >> cm.cameraMat;
     fs["distCoeffs"] >> cm.distCoefs;
     fs["imgPoints"] >> cm.imgPoints;
