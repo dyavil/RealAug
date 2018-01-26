@@ -41,6 +41,7 @@ public:
     std::vector<cv::Point3f> meshNormales;
     std::vector<cv::Point3f> meshColors;
     void loadObj(QString path, float scale, cv::Point3f trans);
+    cv::VideoCapture cap;
 
     int ww;
     int hh;

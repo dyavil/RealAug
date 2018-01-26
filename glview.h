@@ -8,6 +8,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include "cvtogl.h"
+#include <QVector3D>
 
 class GLView : public QGLWidget
 {
@@ -31,6 +32,7 @@ protected:
 private:
     float angle;
     QPoint position;
+    QVector<QVector3D>  vertexArray;
 };
 
 

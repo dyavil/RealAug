@@ -12,6 +12,10 @@ GLView::GLView(QWidget *parent) :
 
 void GLView::initializeGL()
 {
+    for (int i = 0; i < drawing.meshVertices.size(); ++i) {
+        vertexArray.push_back(QVector3D(qreal(drawing.meshVertices[i].x), qreal(drawing.meshVertices[i].y), qreal(drawing.meshVertices[i].z)));
+    }
+
     glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_CULL_FACE);
@@ -27,12 +31,18 @@ void GLView::initializeGL()
 
 void GLView::paintGL()
 {
+
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
 
-
     drawing.drawChessBoard(7, 4, 31.0);
+    qglColor(Qt::white);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, vertexArray.constData());
+    glDrawArrays(GL_TRIANGLES, 0, vertexArray.size());
+    glDisableClientState(GL_VERTEX_ARRAY);
 
     update();
 }
@@ -42,15 +52,7 @@ void GLView::resizeGL(int w, int h)
     glViewport(0, 0, 640, 480);
     drawing.initFrustum();
 
-    /*glMatrixMode(GL_PROJECTION);
 
-    glViewport(0, 0, w, h);
-
-    glOrtho(-FRUSTUM_SIZE, FRUSTUM_SIZE,
-            -FRUSTUM_SIZE, FRUSTUM_SIZE,
-            -FRUSTUM_SIZE, FRUSTUM_SIZE);
-
-    glMatrixMode(GL_MODELVIEW);*/
 }
 
 void GLView::mouseMoveEvent(QMouseEvent *event)

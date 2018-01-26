@@ -1,9 +1,10 @@
 #include "cvtogl.h"
 
-CVtoGL::CVtoGL()
+CVtoGL::CVtoGL():
+cap(0)
 {
-    imgHeight = 40;
-    imgWidth = 40;
+    imgHeight = 640;
+    imgWidth = 480;
     loadObj("teapot.obj", 0.8, cv::Point3f(80.0, 50.0, 60.0));
 }
 
@@ -28,7 +29,7 @@ void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
     //std::cout << colors.size() << ", " << sf.h*sf.w << std::endl;
     result = std::max_element(attrib.vertices.begin(), attrib.vertices.end());
 
-    std::cout << *result << std::endl;
+    //std::cout << *result << std::endl;
     // Loop over shapes
     for (size_t s = 0; s < shapes.size(); s++) {
       // Loop over faces(polygon)
@@ -56,7 +57,7 @@ void CVtoGL::loadObj(QString path, float scale, cv::Point3f trans){
           tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
           tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
           tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-          std::cout << cv::Point3f(red, green, blue) << std::endl;
+          //std::cout << cv::Point3f(red, green, blue) << std::endl;
           meshColors.push_back(cv::Point3f(red, green, blue));
           /*if(vz > (*result - *result*0.82) ) meshVertices.push_back(colorr);
           else treeColors.push_back(Vector3(0.647059, 0.164706, 0.164706));*/
@@ -88,14 +89,7 @@ void CVtoGL::initFrustum(){
     s = z0*invcam*s;
     float dw = cv::norm(p, r);
     float dh = cv::norm(q, s);
-    //std::cout << p << std::endl;
-    //p = cam1*p;
-    /*glOrtho(-imgWidth/3.0, imgWidth/3.0,
-            -imgHeight/3.0, imgHeight/3.0,
-            -0.1, 1000.0);*/
-    /*glFrustum(-0.001, 0.001,
-            -0.001, 0.001,
-            0.0035, 100000.0);*/
+
     glFrustum(-dw/2.0, dw/2.0,
             -dh/2.0, dh/2.0,
             0.1, 10000.0);
@@ -121,7 +115,7 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
     }
 
     int chessBoardFlags = cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE;
-    cv::VideoCapture cap(0);
+
     cv::Mat frame;
     std::vector<cv::Point2f> pointBuf;
     cap.read(frame);
@@ -136,7 +130,7 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
     }
 
     render();
-    drawObj();
+    //drawObj();
     //std::cout << ww << ", " << hh << std::endl;
     for (int i = 0; i < ww-1; ++i) {
         for (int j = 0; j < hh-1; ++j) {
@@ -147,12 +141,6 @@ void CVtoGL::drawChessBoard(int w, int h, float squareWidth){
             glVertex3f(worldPoints[(i+1)*hh+j].x, worldPoints[(i+1)*hh+j].y, worldPoints[(i+1)*hh+j].z);
             glVertex3f(worldPoints[(i+1)*hh+j+1].x, worldPoints[(i+1)*hh+j+1].y, worldPoints[(i+1)*hh+j+1].z);
             glVertex3f(worldPoints[i*hh+j+1].x, worldPoints[i*hh+j+1].y, worldPoints[i*hh+j+1].z);
-            //std::cout << (i+1)*hh+j+1 << ", " << worldPoints.size() << std::endl;
-            /*glVertex3f((squareWidth+squareWidth*i), (squareWidth+squareWidth*j),z);
-            glVertex3f((squareWidth*i), (squareWidth+squareWidth*j),z);
-            glVertex3f((squareWidth*i), (squareWidth*j), z);
-            glVertex3f((squareWidth+squareWidth*i), (squareWidth*j), z);*/
-            //std::cout << squareWidth+squareWidth*i << squareWidth*j << std::endl;
             glEnd();
         }
     }
@@ -197,13 +185,9 @@ void CVtoGL::render(){
     uc.at<double>(1, 0) = -1.0;
     uw = rotT * uc;
 
-    //std::cout << pos_camera.at<double>(1, 0) << pos_camera << std::endl;
-    //std::cout << rotf << std::endl;
-    //std::cout << (cm.cameraMat.at<double>(0, 2)) << ", " << (cm.cameraMat.at<double>(1, 2)) << std::endl;
 
     gluLookAt(pos_camera.at<double>(0, 0), pos_camera.at<double>(1, 0), pos_camera.at<double>(2, 0),
               center.at<double>(0, 0), center.at<double>(1, 0), center.at<double>(2, 0),
               uw.at<double>(0, 0), uw.at<double>(1, 0), uw.at<double>(2, 0));
 
-    //drawObj();
 }
